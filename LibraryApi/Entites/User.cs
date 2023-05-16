@@ -8,6 +8,6 @@
         public string Email { get; set; }
         public bool IsActive { get; set; }
 
-        public ICollection<Loan> Loans { get; set; }
+        public ICollection<Loan>? Loans { get; set; }
     }
 }

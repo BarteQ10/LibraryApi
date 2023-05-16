@@ -11,7 +11,7 @@
         public bool IsAvailable { get; set; }
 
 
-        public ICollection<Loan> Loans { get; set; }
+        public ICollection<Loan>? Loans { get; set; }
     }
 
 }
