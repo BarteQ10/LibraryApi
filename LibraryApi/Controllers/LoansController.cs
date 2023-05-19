@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryApi.Data;
 using LibraryApi.Entites;
+using LibraryApi.DTOs.Loan;
+using LibraryApi.DTOs.User;
 
 namespace LibraryApi.Controllers
 {
@@ -23,23 +25,45 @@ namespace LibraryApi.Controllers
 
         // GET: api/Loans
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Loan>>> GetLoans()
+        public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetLoans()
         {
-          if (_context.Loans == null)
-          {
-              return NotFound();
-          }
-            return await _context.Loans.ToListAsync();
+            var loans = await _context.Loans
+                .Include(b => b.Book)
+                .Include(u => u.User)
+                .ToListAsync();
+
+            if (loans == null)
+            {
+                return NotFound();
+            }
+
+            var loansDTO = new List<GetLoanDTO>();
+            foreach (var loan in loans)
+            {
+                var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
+                var dto = new GetLoanDTO
+                {
+                    Id = loan.Id,
+                    Book = loan.Book,
+                    BorrowDate = loan.BorrowDate,
+                    IsReturned = loan.IsReturned,
+                    ReturnDate = loan.ReturnDate,
+                    User = userDTO
+                };
+                loansDTO.Add(dto);
+            }
+
+            return loansDTO;
         }
 
         // GET: api/Loans/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Loan>> GetLoan(int id)
         {
-          if (_context.Loans == null)
-          {
-              return NotFound();
-          }
+            if (_context.Loans == null)
+            {
+                return NotFound();
+            }
             var loan = await _context.Loans.FindAsync(id);
 
             if (loan == null)
@@ -84,16 +108,27 @@ namespace LibraryApi.Controllers
         // POST: api/Loans
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Loan>> PostLoan(Loan loan)
+        public async Task<ActionResult<Loan>> PostLoan(CreateLoanDTO request)
         {
-          if (_context.Loans == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Loans'  is null.");
-          }
+            if (_context.Loans == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Loans'  is null.");
+            }
+            var book = await _context.Books.FindAsync(request.BookId);
+            if (book == null)
+            {
+                return NotFound("Book not Found");
+            }
+            var user = await _context.Users.FindAsync(request.UserId);
+            if (user == null)
+            {
+                return NotFound("User not Found");
+            }
+            var loan = new Loan { BorrowDate = request.BorrowDate, ReturnDate = request.ReturnDate, IsReturned = request.IsReturned, Book = book, User = user };
             _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLoan", new { id = loan.Id }, loan);
+            return CreatedAtAction("GetLoan", new { id = loan.Id }, null);
         }
 
         // DELETE: api/Loans/5

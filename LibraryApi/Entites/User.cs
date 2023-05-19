@@ -1,4 +1,6 @@
-﻿namespace LibraryApi.Entites
+﻿using System.Text.Json.Serialization;
+
+namespace LibraryApi.Entites
 {
     public class User
     {
@@ -7,7 +9,7 @@
         public string PasswordHash { get; set; }
         public string Email { get; set; }
         public bool IsActive { get; set; }
-
+        [JsonIgnore]
         public ICollection<Loan>? Loans { get; set; }
     }
 }

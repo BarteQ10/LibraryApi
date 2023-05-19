@@ -1,4 +1,4 @@
-﻿namespace LibraryApi.DTOs
+﻿namespace LibraryApi.DTOs.User
 {
     public record struct CreateUserDTO
     {

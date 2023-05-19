@@ -1,4 +1,4 @@
-﻿namespace LibraryApi.DTOs
+﻿namespace LibraryApi.DTOs.Book
 {
     public record struct CreateBookDTO
     {

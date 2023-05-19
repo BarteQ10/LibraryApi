@@ -6,8 +6,8 @@ using System.Text;
 using LibraryApi;
 using LibraryApi.Entites;
 using FluentValidation;
-using LibraryApi.DTOs;
 using FluentValidation.AspNetCore;
+using LibraryApi.DTOs.User;
 
 var builder = WebApplication.CreateBuilder(args);
 

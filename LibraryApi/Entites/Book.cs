@@ -1,4 +1,6 @@
-﻿namespace LibraryApi.Entites
+﻿using System.Text.Json.Serialization;
+
+namespace LibraryApi.Entites
 {
     public class Book
     {
@@ -9,7 +11,7 @@
         public string Description { get; set; }
         public string CoverImage { get; set; }
         public bool IsAvailable { get; set; }
-
+        [JsonIgnore]
 
         public ICollection<Loan>? Loans { get; set; }
     }

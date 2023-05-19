@@ -2,7 +2,7 @@
 using LibraryApi.Data;
 using System.Text.RegularExpressions;
 
-namespace LibraryApi.DTOs
+namespace LibraryApi.DTOs.User
 {
     public class RegisterDTOValidator : AbstractValidator<RegisterDTO>
     {
@@ -13,9 +13,10 @@ namespace LibraryApi.DTOs
             var digit = new Regex("(\\d)+");
             var symbol = new Regex("(\\W)+");
 
-            return (lowercase.IsMatch(pw) && uppercase.IsMatch(pw) && digit.IsMatch(pw) && symbol.IsMatch(pw));
+            return lowercase.IsMatch(pw) && uppercase.IsMatch(pw) && digit.IsMatch(pw) && symbol.IsMatch(pw);
         }
-        public RegisterDTOValidator(ApplicationDbContext dbContext) {
+        public RegisterDTOValidator(ApplicationDbContext dbContext)
+        {
             RuleFor(x => x.Email)
                     .NotEmpty()
                     .EmailAddress();
@@ -47,8 +48,8 @@ namespace LibraryApi.DTOs
             var digit = new Regex("(\\d)+");
             var symbol = new Regex("(\\W)+");
 
-            return (lowercase.IsMatch(pw) && uppercase.IsMatch(pw) && digit.IsMatch(pw) && symbol.IsMatch(pw));
+            return lowercase.IsMatch(pw) && uppercase.IsMatch(pw) && digit.IsMatch(pw) && symbol.IsMatch(pw);
         }
     }
-    
+
 }

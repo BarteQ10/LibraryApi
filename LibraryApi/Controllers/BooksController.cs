@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryApi.Data;
 using LibraryApi.Entites;
-using LibraryApi.DTOs;
+using LibraryApi.DTOs.Book;
 
 namespace LibraryApi.Controllers
 {

@@ -11,11 +11,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using LibraryApi.DTOs;
+using LibraryApi.DTOs.User;
 
 namespace LibraryApi.Controllers
 {
-        [ApiController]
+    [ApiController]
         [Route("api/[controller]")]
         public class AccountController : ControllerBase
         {
