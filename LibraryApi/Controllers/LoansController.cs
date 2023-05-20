@@ -24,12 +24,14 @@ namespace LibraryApi.Controllers
         }
 
         // GET: api/Loans
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetLoans()
+        [HttpGet("user/{id}")]
+        public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetLoans(int id)
         {
             var loans = await _context.Loans
                 .Include(b => b.Book)
                 .Include(u => u.User)
+                .Where(u => u.User.Id == id)
+                .OrderBy(l => l.Id)
                 .ToListAsync();
 
             if (loans == null)
@@ -41,6 +43,7 @@ namespace LibraryApi.Controllers
             foreach (var loan in loans)
             {
                 var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
+
                 var dto = new GetLoanDTO
                 {
                     Id = loan.Id,
@@ -74,41 +77,10 @@ namespace LibraryApi.Controllers
             return loan;
         }
 
-        // PUT: api/Loans/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutLoan(int id, Loan loan)
-        {
-            if (id != loan.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(loan).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LoanExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
         // POST: api/Loans
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Loan>> PostLoan(CreateLoanDTO request)
+        [HttpPost("create")]
+        public async Task<ActionResult<Loan>> CreateLoan(CreateLoanDTO request)
         {
             if (_context.Loans == null)
             {
@@ -119,16 +91,48 @@ namespace LibraryApi.Controllers
             {
                 return NotFound("Book not Found");
             }
+
+            if(book.IsAvailable == false)
+            {
+                return NotFound("Book not Available");
+            }
+
             var user = await _context.Users.FindAsync(request.UserId);
             if (user == null)
             {
                 return NotFound("User not Found");
             }
-            var loan = new Loan { BorrowDate = request.BorrowDate, ReturnDate = request.ReturnDate, IsReturned = request.IsReturned, Book = book, User = user };
+            var loan = new Loan { BorrowDate = request.BorrowDate, ReturnDate = null, IsReturned = false, Book = book, User = user };
+            book.IsAvailable = false;
             _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetLoan", new { id = loan.Id }, null);
+        }
+
+        [HttpPost("end")]
+        public async Task<ActionResult<Loan>> EndLoan(FinishLoanDTO request)
+        {
+            if (_context.Loans == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Loans'  is null.");
+            }
+            var loan = await _context.Loans
+                .Include(b => b.Book)
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(i => i.Id == request.LoanId);
+
+            if (loan == null)
+            {
+                return NotFound("Loan not Found");
+            }
+
+            loan.Book.IsAvailable = true;
+            loan.ReturnDate = request.ReturnDate;
+            loan.IsReturned = true;
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         // DELETE: api/Loans/5
