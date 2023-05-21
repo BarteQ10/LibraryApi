@@ -8,6 +8,8 @@ using LibraryApi.Entites;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using LibraryApi.DTOs.User;
+using LibraryApi.Services;
+using LibraryApi.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +37,9 @@ builder.Services.AddAuthentication(option =>
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddControllers().AddFluentValidation();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

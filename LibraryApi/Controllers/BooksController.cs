@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using LibraryApi.Data;
 using LibraryApi.Entites;
 using LibraryApi.DTOs.Book;
+using LibraryApi.Services;
 
 namespace LibraryApi.Controllers
 {
@@ -15,39 +16,30 @@ namespace LibraryApi.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBookService _bookService;
 
-        public BooksController(ApplicationDbContext context)
+        public BooksController(IBookService bookService)
         {
-            _context = context;
+            _bookService = bookService;
         }
 
         // GET: api/Books
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
         {
-          if (_context.Books == null)
-          {
-              return NotFound();
-          }
-            return await _context.Books.OrderBy(c => c.Id).ToListAsync();
+            var books = await _bookService.GetBooksAsync();
+            return Ok(books);
         }
 
         // GET: api/Books/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-          if (_context.Books == null)
-          {
-              return NotFound();
-          }
-            var book = await _context.Books.FindAsync(id);
-
+            var book = await _bookService.GetBookByIdAsync(id);
             if (book == null)
             {
                 return NotFound();
             }
-
             return book;
         }
 
@@ -56,24 +48,12 @@ namespace LibraryApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBook(int id, CreateBookDTO request)
         {
-            
-            if (!BookExists(id))
+            var result = await _bookService.UpdateBookAsync(id, request);
+            if (result)
             {
-                return NotFound();
+                return NoContent();
             }
-            var book = new Book { Id = id, Author = request.Author, CoverImage = request.CoverImage, Description = request.Description, Genre = request.Genre, IsAvailable = request.IsAvailable, Title = request.Title,  Loans = null };
-            _context.Entry(book).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw;
-            }
-
-            return NoContent();
+            return NotFound();
         }
 
         // POST: api/Books
@@ -81,14 +61,7 @@ namespace LibraryApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Book>> PostBook(CreateBookDTO request)
         {
-          if (_context.Books == null)
-          {
-              return Problem("Entity set 'ApplicationDbContext.Books'  is null.");
-          }
-          var book = new Book { Author = request.Author , CoverImage = request.CoverImage, Description= request.Description, Genre= request.Genre, IsAvailable=request.IsAvailable, Title = request.Title, Loans=null};
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
-
+            var book = await _bookService.AddBookAsync(request);
             return CreatedAtAction("GetBook", new { id = book.Id }, book);
         }
 
@@ -96,25 +69,12 @@ namespace LibraryApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            if (_context.Books == null)
+            var result = await _bookService.DeleteBookAsync(id);
+            if (result)
             {
-                return NotFound();
+                return NoContent();
             }
-            var book = await _context.Books.FindAsync(id);
-            if (book == null)
-            {
-                return NotFound();
-            }
-
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool BookExists(int id)
-        {
-            return (_context.Books?.Any(e => e.Id == id)).GetValueOrDefault();
+            return NotFound();
         }
     }
 }
