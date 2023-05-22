@@ -10,6 +10,7 @@ using LibraryApi.Entites;
 using LibraryApi.Services;
 using LibraryApi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace LibraryApi.Controllers
 {
@@ -27,6 +28,11 @@ namespace LibraryApi.Controllers
         [HttpGet("user/{id}"), Authorize]
         public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetLoans(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id != Int32.Parse(userId))
+            {
+                return Unauthorized();
+            }
             var loans = await _loanService.GetLoansByUserId(id);
 
             if (loans == null)
@@ -40,13 +46,17 @@ namespace LibraryApi.Controllers
         [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<GetLoanDTO>> GetLoan(int id)
         {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
             var loan = await _loanService.GetLoanById(id);
 
             if (loan == null)
             {
                 return NotFound();
             }
-
+            if (loan.User.Email != userEmail)
+            {
+                return Unauthorized();
+            }
             return Ok(loan);
         }
 
@@ -66,7 +76,8 @@ namespace LibraryApi.Controllers
         [HttpPost("end"), Authorize]
         public async Task<IActionResult> EndLoan(FinishLoanDTO request)
         {
-            var result = await _loanService.FinishLoan(request);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _loanService.FinishLoan(request, Int32.Parse(userId));
 
             if (result.ErrorMessage != null)
             {
@@ -79,9 +90,15 @@ namespace LibraryApi.Controllers
         [HttpDelete("{id}"), Authorize]
         public async Task<IActionResult> DeleteLoan(int id)
         {
-            var result = await _loanService.DeleteLoan(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _loanService.DeleteLoan(id, Int32.Parse(userId));
 
-            if (!result)
+            if(result.ErrorCode != null ) 
+            { 
+                return Unauthorized();
+            }
+
+            if (result.ErrorMessage != null)
             {
                 return NotFound();
             }

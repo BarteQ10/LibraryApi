@@ -3,12 +3,14 @@ using LibraryApi.Data;
 using LibraryApi.DTOs.Loan;
 using LibraryApi.Entites;
 using LibraryApi.DTOs.User;
+using Azure.Core;
 
 namespace LibraryApi.Services.Interfaces
 {
     public class LoanResult
     {
         public Loan Loan { get; set; }
+        public string ErrorCode { get; set; }
         public string ErrorMessage { get; set; }
     }
     public class LoanService : ILoanService
@@ -65,7 +67,10 @@ namespace LibraryApi.Services.Interfaces
                 .Include(b => b.Book)
                 .Include(u => u.User)
                 .FirstOrDefaultAsync(l => l.Id == loanId);
-
+            if(loan == null)
+            {
+                return null;
+            }
             var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
 
             var dto = new GetLoanDTO
@@ -107,7 +112,7 @@ namespace LibraryApi.Services.Interfaces
             return new LoanResult { Loan = loan };
         }
 
-        public async Task<LoanResult> FinishLoan(FinishLoanDTO request)
+        public async Task<LoanResult> FinishLoan(FinishLoanDTO request, int userId)
         {
             if (_context.Loans == null)
             {
@@ -124,6 +129,11 @@ namespace LibraryApi.Services.Interfaces
                 return new LoanResult { ErrorMessage = "Loan not found" };
             }
 
+            if (loan.User.Id != userId)
+            {
+                return new LoanResult { ErrorCode = "401", ErrorMessage = "Loan not found" };
+            }
+
             loan.Book.IsAvailable = true;
             loan.ReturnDate = request.ReturnDate;
             loan.IsReturned = true;
@@ -132,23 +142,27 @@ namespace LibraryApi.Services.Interfaces
             return new LoanResult { Loan = loan };
         }
 
-        public async Task<bool> DeleteLoan(int loanId)
+        public async Task<LoanResult> DeleteLoan(int loanId, int userId)
         {
-            if (_context.Loans == null)
-            {
-                return false;
-            }
 
-            var loan = await _context.Loans.FindAsync(loanId);
+            var loan = await _context.Loans
+                .Include(b => b.Book)
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(i => i.Id == loanId);
             if (loan == null)
             {
-                return false;
+                return new LoanResult { ErrorMessage = "Loan not found" };
+            }
+
+            if(loan.User.Id != userId)
+            {
+                return new LoanResult { ErrorCode= "401", ErrorMessage = "Loan not found" };
             }
 
             _context.Loans.Remove(loan);
             await _context.SaveChangesAsync();
 
-            return true;
+            return new LoanResult { };
         }
     }
 }
