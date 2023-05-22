@@ -8,7 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using LibraryApi.Data;
 using LibraryApi.Entites;
 using LibraryApi.DTOs.Book;
+using LibraryApi.Services.Interfaces;
 using LibraryApi.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryApi.Controllers
 {
@@ -45,7 +47,7 @@ namespace LibraryApi.Controllers
 
         // PUT: api/Books/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPut("{id}"), Authorize]
         public async Task<IActionResult> PutBook(int id, CreateBookDTO request)
         {
             var result = await _bookService.UpdateBookAsync(id, request);
@@ -58,7 +60,7 @@ namespace LibraryApi.Controllers
 
         // POST: api/Books
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost, Authorize]
         public async Task<ActionResult<Book>> PostBook(CreateBookDTO request)
         {
             var book = await _bookService.AddBookAsync(request);
@@ -66,7 +68,7 @@ namespace LibraryApi.Controllers
         }
 
         // DELETE: api/Books/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize]
         public async Task<IActionResult> DeleteBook(int id)
         {
             var result = await _bookService.DeleteBookAsync(id);

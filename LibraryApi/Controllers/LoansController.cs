@@ -7,7 +7,9 @@ using LibraryApi.Data;
 using LibraryApi.DTOs.Loan;
 using LibraryApi.DTOs.User;
 using LibraryApi.Entites;
+using LibraryApi.Services;
 using LibraryApi.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryApi.Controllers
 {
@@ -22,7 +24,7 @@ namespace LibraryApi.Controllers
             _loanService = loanService;
         }
 
-        [HttpGet("user/{id}")]
+        [HttpGet("user/{id}"), Authorize]
         public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetLoans(int id)
         {
             var loans = await _loanService.GetLoansByUserId(id);
@@ -35,7 +37,7 @@ namespace LibraryApi.Controllers
             return Ok(loans);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<GetLoanDTO>> GetLoan(int id)
         {
             var loan = await _loanService.GetLoanById(id);
@@ -48,7 +50,7 @@ namespace LibraryApi.Controllers
             return Ok(loan);
         }
 
-        [HttpPost("create")]
+        [HttpPost("create"), Authorize]
         public async Task<IActionResult> CreateLoan(CreateLoanDTO request)
         {
             var result = await _loanService.CreateLoan(request);
@@ -61,7 +63,7 @@ namespace LibraryApi.Controllers
             return CreatedAtAction("GetLoan", new { id = result.Loan.Id }, null);
         }
 
-        [HttpPost("end")]
+        [HttpPost("end"), Authorize]
         public async Task<IActionResult> EndLoan(FinishLoanDTO request)
         {
             var result = await _loanService.FinishLoan(request);
@@ -74,7 +76,7 @@ namespace LibraryApi.Controllers
             return Ok();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize]
         public async Task<IActionResult> DeleteLoan(int id)
         {
             var result = await _loanService.DeleteLoan(id);

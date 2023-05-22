@@ -5,6 +5,7 @@ using LibraryApi.Data;
 using LibraryApi.Entites;
 using LibraryApi.DTOs.Book;
 using Microsoft.EntityFrameworkCore;
+using LibraryApi.Services.Interfaces;
 
 namespace LibraryApi.Services
 {
