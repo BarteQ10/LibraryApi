@@ -31,32 +31,21 @@ namespace LibraryApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id != Int32.Parse(userId))
             {
-                return Unauthorized();
+                throw new UnauthorizedAccessException();
             }
             var loans = await _loanService.GetLoansByUserId(id);
-
             if (loans == null)
             {
                 return NotFound();
             }
-
             return Ok(loans);
         }
 
         [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<GetLoanDTO>> GetLoan(int id)
         {
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            var loan = await _loanService.GetLoanById(id);
-
-            if (loan == null)
-            {
-                return NotFound();
-            }
-            if (loan.User.Email != userEmail)
-            {
-                return Unauthorized();
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var loan = await _loanService.GetLoanById(id, Int32.Parse(userId));
             return Ok(loan);
         }
 
@@ -64,13 +53,7 @@ namespace LibraryApi.Controllers
         public async Task<IActionResult> CreateLoan(CreateLoanDTO request)
         {
             var result = await _loanService.CreateLoan(request);
-
-            if (result.ErrorMessage != null)
-            {
-                return BadRequest(result.ErrorMessage);
-            }
-
-            return CreatedAtAction("GetLoan", new { id = result.Loan.Id }, null);
+            return CreatedAtAction("GetLoan", new { id = result.Id }, null);
         }
 
         [HttpPost("end"), Authorize]
@@ -78,13 +61,7 @@ namespace LibraryApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var result = await _loanService.FinishLoan(request, Int32.Parse(userId));
-
-            if (result.ErrorMessage != null)
-            {
-                return BadRequest(result.ErrorMessage);
-            }
-
-            return Ok();
+            return Ok(result.Id);
         }
 
         [HttpDelete("{id}"), Authorize]
@@ -92,17 +69,10 @@ namespace LibraryApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var result = await _loanService.DeleteLoan(id, Int32.Parse(userId));
-
-            if(result.ErrorCode != null ) 
-            { 
-                return Unauthorized();
-            }
-
-            if (result.ErrorMessage != null)
+            if (!result)
             {
                 return NotFound();
             }
-
             return NoContent();
         }
     }

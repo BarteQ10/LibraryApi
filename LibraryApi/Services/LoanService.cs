@@ -1,18 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using LibraryApi.Data;
 using LibraryApi.DTOs.Loan;
 using LibraryApi.Entites;
 using LibraryApi.DTOs.User;
 using Azure.Core;
+using Microsoft.AspNetCore.Mvc;
+using LibraryApi.Data;
+using LibraryApi.Services.Interfaces;
+using System.Net.Mail;
+using ServiceStack.Host;
 
-namespace LibraryApi.Services.Interfaces
+namespace LibraryApi.Services
 {
-    public class LoanResult
-    {
-        public Loan Loan { get; set; }
-        public string ErrorCode { get; set; }
-        public string ErrorMessage { get; set; }
-    }
     public class LoanService : ILoanService
     {
         private readonly ApplicationDbContext _context;
@@ -56,20 +54,24 @@ namespace LibraryApi.Services.Interfaces
             return loansDTO;
         }
 
-        public async Task<GetLoanDTO> GetLoanById(int loanId)
+        public async Task<GetLoanDTO> GetLoanById(int loanId, int userId)
         {
             if (_context.Loans == null)
             {
-                return null;
+                throw new Exception();
             }
 
             var loan = await _context.Loans
                 .Include(b => b.Book)
                 .Include(u => u.User)
                 .FirstOrDefaultAsync(l => l.Id == loanId);
-            if(loan == null)
+            if (loan == null)
             {
-                return null;
+                throw new HttpException(404, "Loan not found");
+            }
+            if(loan.User.Id != userId) 
+            {
+                throw new UnauthorizedAccessException();
             }
             var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
 
@@ -85,23 +87,23 @@ namespace LibraryApi.Services.Interfaces
             return dto;
         }
 
-        public async Task<LoanResult> CreateLoan(CreateLoanDTO request)
+        public async Task<Loan> CreateLoan(CreateLoanDTO request)
         {
             var book = await _context.Books.FindAsync(request.BookId);
             if (book == null)
             {
-                return new LoanResult { ErrorMessage = "Book not found" };
+                throw new HttpException(404, "Book not found");
             }
 
             if (!book.IsAvailable)
             {
-                return new LoanResult { ErrorMessage = "Book is not available" };
+                throw new HttpException(406, "Book is not available");
             }
 
             var user = await _context.Users.FindAsync(request.UserId);
             if (user == null)
             {
-                return new LoanResult { ErrorMessage = "User not found" };
+                throw new HttpException(404, "User not found");
             }
 
             var loan = new Loan { BorrowDate = request.BorrowDate, ReturnDate = null, IsReturned = false, Book = book, User = user };
@@ -109,14 +111,14 @@ namespace LibraryApi.Services.Interfaces
             _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
 
-            return new LoanResult { Loan = loan };
+            return loan;
         }
 
-        public async Task<LoanResult> FinishLoan(FinishLoanDTO request, int userId)
+        public async Task<Loan> FinishLoan(FinishLoanDTO request, int userId)
         {
             if (_context.Loans == null)
             {
-                return new LoanResult { ErrorMessage = "Problem with Data Base" };
+                throw new Exception();
             }
 
             var loan = await _context.Loans
@@ -126,12 +128,12 @@ namespace LibraryApi.Services.Interfaces
 
             if (loan == null)
             {
-                return new LoanResult { ErrorMessage = "Loan not found" };
+                throw new HttpException(404, "Loan not found");
             }
 
             if (loan.User.Id != userId)
             {
-                return new LoanResult { ErrorCode = "401", ErrorMessage = "Loan not found" };
+                throw new UnauthorizedAccessException();
             }
 
             loan.Book.IsAvailable = true;
@@ -139,10 +141,10 @@ namespace LibraryApi.Services.Interfaces
             loan.IsReturned = true;
             await _context.SaveChangesAsync();
 
-            return new LoanResult { Loan = loan };
+            return loan;
         }
 
-        public async Task<LoanResult> DeleteLoan(int loanId, int userId)
+        public async Task<bool> DeleteLoan(int loanId, int userId)
         {
 
             var loan = await _context.Loans
@@ -151,18 +153,18 @@ namespace LibraryApi.Services.Interfaces
                 .FirstOrDefaultAsync(i => i.Id == loanId);
             if (loan == null)
             {
-                return new LoanResult { ErrorMessage = "Loan not found" };
+                return false;
             }
 
-            if(loan.User.Id != userId)
+            if (loan.User.Id != userId)
             {
-                return new LoanResult { ErrorCode= "401", ErrorMessage = "Loan not found" };
+                throw new UnauthorizedAccessException();
             }
 
             _context.Loans.Remove(loan);
             await _context.SaveChangesAsync();
 
-            return new LoanResult { };
+            return true;
         }
     }
 }
