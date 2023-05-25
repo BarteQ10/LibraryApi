@@ -25,7 +25,6 @@ namespace LibraryApi.Controllers
             _bookService = bookService;
         }
 
-        // GET: api/Books
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
         {
@@ -33,33 +32,20 @@ namespace LibraryApi.Controllers
             return Ok(books);
         }
 
-        // GET: api/Books/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
             var book = await _bookService.GetBookByIdAsync(id);
-            if (book == null)
-            {
-                return NotFound();
-            }
-            return book;
+            return Ok(book);
         }
 
-        // PUT: api/Books/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}"), Authorize]
         public async Task<IActionResult> PutBook(int id, CreateBookDTO request)
         {
-            var result = await _bookService.UpdateBookAsync(id, request);
-            if (result)
-            {
-                return NoContent();
-            }
-            return NotFound();
+            await _bookService.UpdateBookAsync(id, request);
+            return Ok("Updated");
         }
 
-        // POST: api/Books
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost, Authorize]
         public async Task<ActionResult<Book>> PostBook(CreateBookDTO request)
         {
@@ -67,16 +53,12 @@ namespace LibraryApi.Controllers
             return CreatedAtAction("GetBook", new { id = book.Id }, book);
         }
 
-        // DELETE: api/Books/5
         [HttpDelete("{id}"), Authorize]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            var result = await _bookService.DeleteBookAsync(id);
-            if (result)
-            {
-                return NoContent();
-            }
-            return NotFound();
+            await _bookService.DeleteBookAsync(id);
+            return NoContent();
+
         }
     }
 }

@@ -18,29 +18,16 @@ namespace LibraryApi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDTO dto)
         {
-            var result = await _accountService.Register(dto);
-            if (result)
-            {
-                return Ok();
-            }
-            else
-            {
-                return BadRequest("Registration failed");
-            }
+            await _accountService.Register(dto);
+            return Ok();
+
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDTO dto)
         {
             var token = await _accountService.Login(dto);
-            if (token != null)
-            {
-                return Ok(token);
-            }
-            else
-            {
-                return BadRequest("Invalid username or password");
-            }
+            return Ok(token);
         }
     }
 }

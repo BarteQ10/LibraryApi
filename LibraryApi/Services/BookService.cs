@@ -6,6 +6,7 @@ using LibraryApi.Entites;
 using LibraryApi.DTOs.Book;
 using Microsoft.EntityFrameworkCore;
 using LibraryApi.Services.Interfaces;
+using ServiceStack.Host;
 
 namespace LibraryApi.Services
 {
@@ -25,7 +26,16 @@ namespace LibraryApi.Services
 
         public async Task<Book> GetBookByIdAsync(int id)
         {
-            return await _context.Books.FindAsync(id);
+            var book = await _context.Books.FindAsync(id);
+            if (book == null)
+            {
+                throw new HttpException(404, "Book not found");
+            }
+            else
+            {
+                return book;
+            }
+            
         }
 
         public async Task<bool> UpdateBookAsync(int id, CreateBookDTO request)
@@ -34,7 +44,7 @@ namespace LibraryApi.Services
 
             if (book == null)
             {
-                return false;
+                throw new HttpException(404, "Book not found");
             }
 
             book.Author = request.Author;
@@ -72,7 +82,7 @@ namespace LibraryApi.Services
 
             if (book == null)
             {
-                return false;
+                throw new HttpException(404, "Book not found");
             }
 
             _context.Books.Remove(book);

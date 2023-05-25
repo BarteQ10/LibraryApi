@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using LibraryApi.DTOs.User;
 using LibraryApi.Services.Interfaces;
+using ServiceStack.Host;
 
 namespace LibraryApi.Services
 {
@@ -50,12 +51,12 @@ namespace LibraryApi.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user is null)
             {
-                return null;
+                throw new HttpException(404, "Invalid username or password");
             }
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
-                return null;
+                throw new HttpException(404, "Invalid username or password");
             }
             var claims = new List<Claim>()
             {
