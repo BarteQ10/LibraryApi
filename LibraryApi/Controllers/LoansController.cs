@@ -49,6 +49,17 @@ namespace LibraryApi.Controllers
             return Ok(loan);
         }
 
+        [HttpGet, Authorize(Roles = "Admin,Librarian")]
+        public async Task<ActionResult<IEnumerable<GetLoanDTO>>> GetAllLoans()
+        {
+            var loans = await _loanService.GetAllLoans();
+            if (loans == null)
+            {
+                return NotFound();
+            }
+            return Ok(loans);
+        }
+
         [HttpPost("create"), Authorize]
         public async Task<IActionResult> CreateLoan(CreateLoanDTO request)
         {
@@ -64,7 +75,7 @@ namespace LibraryApi.Controllers
             return Ok(result.Id);
         }
 
-        [HttpDelete("{id}"), Authorize]
+        [HttpDelete("{id}"), Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> DeleteLoan(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

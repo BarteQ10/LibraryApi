@@ -39,6 +39,9 @@ namespace LibraryApi.DTOs.User
                         context.AddFailure("Email", "That email is taken");
                     }
                 });
+            RuleFor(x => x.Role)
+                .NotEmpty()
+                .IsInEnum();
         }
 
         private bool HasValidPassword(string pw)

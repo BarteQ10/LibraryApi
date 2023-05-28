@@ -39,21 +39,21 @@ namespace LibraryApi.Controllers
             return Ok(book);
         }
 
-        [HttpPut("{id}"), Authorize]
+        [HttpPut("{id}"), Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> PutBook(int id, CreateBookDTO request)
         {
             await _bookService.UpdateBookAsync(id, request);
             return Ok("Updated");
         }
 
-        [HttpPost, Authorize]
+        [HttpPost, Authorize(Roles = "Admin,Librarian")]
         public async Task<ActionResult<Book>> PostBook(CreateBookDTO request)
         {
             var book = await _bookService.AddBookAsync(request);
             return CreatedAtAction("GetBook", new { id = book.Id }, book);
         }
 
-        [HttpDelete("{id}"), Authorize]
+        [HttpDelete("{id}"), Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> DeleteBook(int id)
         {
             await _bookService.DeleteBookAsync(id);

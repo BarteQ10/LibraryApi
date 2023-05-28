@@ -9,7 +9,14 @@ namespace LibraryApi.Entites
         public string PasswordHash { get; set; }
         public string Email { get; set; }
         public bool IsActive { get; set; }
+        public Role Role { get; set; }
         [JsonIgnore]
         public ICollection<Loan>? Loans { get; set; }
+    }
+    public enum Role
+    {
+        User,
+        Librarian,
+        Admin
     }
 }

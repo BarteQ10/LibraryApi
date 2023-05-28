@@ -1,9 +1,12 @@
-﻿namespace LibraryApi.DTOs.User
+﻿using LibraryApi.Entites;
+
+namespace LibraryApi.DTOs.User
 {
     public record struct GetUserDTO
     {
         public string Username { get; init; }
         public string Email { get; init; }
+        public Role Role { get; init; }
 
     }
 }

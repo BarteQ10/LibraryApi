@@ -37,7 +37,8 @@ namespace LibraryApi.Services
                 Email = dto.Email,
                 IsActive = false,
                 Username = dto.Username,
-                Loans = null
+                Loans = null,
+                Role = dto.Role,
             };
             var hashedPassword = _passwordHasher.HashPassword(newUser, dto.Password);
             newUser.PasswordHash = hashedPassword;
@@ -61,7 +62,8 @@ namespace LibraryApi.Services
             var claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, $"{user.Role}")
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.JwtKey));

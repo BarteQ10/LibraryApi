@@ -53,7 +53,38 @@ namespace LibraryApi.Services
 
             return loansDTO;
         }
+        public async Task<IEnumerable<GetLoanDTO>> GetAllLoans()
+        {
+            var loans = await _context.Loans
+                .Include(b => b.Book)
+                .Include(u => u.User)
+                .OrderBy(l => l.Id)
+                .ToListAsync();
 
+            if (loans == null)
+            {
+                return null;
+            }
+
+            var loansDTO = new List<GetLoanDTO>();
+            foreach (var loan in loans)
+            {
+                var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username, Role = loan.User.Role };
+
+                var dto = new GetLoanDTO
+                {
+                    Id = loan.Id,
+                    Book = loan.Book,
+                    BorrowDate = loan.BorrowDate,
+                    IsReturned = loan.IsReturned,
+                    ReturnDate = loan.ReturnDate,
+                    User = userDTO
+                };
+                loansDTO.Add(dto);
+            }
+
+            return loansDTO;
+        }
         public async Task<GetLoanDTO> GetLoanById(int loanId, int userId)
         {
             if (_context.Loans == null)
@@ -166,5 +197,7 @@ namespace LibraryApi.Services
 
             return true;
         }
+
+        
     }
 }
