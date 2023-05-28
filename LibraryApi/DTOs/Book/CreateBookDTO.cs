@@ -6,7 +6,7 @@
         public string Author { get; init; }
         public string Genre { get; init; }
         public string Description { get; init; }
-        public string CoverImage { get; init; }
+        public byte[] CoverImageData { get; init; }
         public bool IsAvailable { get; init; }
     }
 }

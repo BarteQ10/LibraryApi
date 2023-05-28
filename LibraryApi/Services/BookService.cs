@@ -7,6 +7,9 @@ using LibraryApi.DTOs.Book;
 using Microsoft.EntityFrameworkCore;
 using LibraryApi.Services.Interfaces;
 using ServiceStack.Host;
+using System;
+using System.IO;
+using Microsoft.AspNetCore.Http;
 
 namespace LibraryApi.Services
 {
@@ -48,7 +51,7 @@ namespace LibraryApi.Services
             }
 
             book.Author = request.Author;
-            book.CoverImage = request.CoverImage;
+            book.CoverImageData = request.CoverImageData;
             book.Description = request.Description;
             book.Genre = request.Genre;
             book.IsAvailable = request.IsAvailable;
@@ -63,14 +66,18 @@ namespace LibraryApi.Services
             var book = new Book
             {
                 Author = request.Author,
-                CoverImage = request.CoverImage,
                 Description = request.Description,
                 Genre = request.Genre,
                 IsAvailable = request.IsAvailable,
                 Title = request.Title
             };
 
-            _context.Books.Add(book);
+            if (request.CoverImageData != null)
+            {
+                book.CoverImageData = request.CoverImageData;
+            }
+            
+             _context.Books.Add(book);
             await _context.SaveChangesAsync();
 
             return book;
