@@ -13,6 +13,7 @@ using LibraryApi.Services.Interfaces;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using ServiceStack.Host;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,7 +128,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+           Path.Combine(builder.Environment.ContentRootPath, "Images")),
+    RequestPath = "/Images"
+});
 app.UseAuthorization();
 
 app.MapControllers();

@@ -46,10 +46,12 @@ namespace LibraryApi.Controllers
             return Ok("Updated");
         }
 
-        [HttpPost, Authorize(Roles = "Admin,Librarian")]
-        public async Task<ActionResult<Book>> PostBook(CreateBookDTO request)
+        [HttpPost]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<ActionResult<Book>> PostBook([FromForm] CreateBookDTO request)
         {
-            var book = await _bookService.AddBookAsync(request);
+            var httpContext = HttpContext;
+            var book = await _bookService.AddBookAsync(request, httpContext);
             return CreatedAtAction("GetBook", new { id = book.Id }, book);
         }
 

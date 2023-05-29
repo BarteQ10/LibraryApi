@@ -8,7 +8,7 @@ namespace LibraryApi.Services
         Task<IEnumerable<Book>> GetBooksAsync();
         Task<Book> GetBookByIdAsync(int id);
         Task<bool> UpdateBookAsync(int id, CreateBookDTO request);
-        Task<Book> AddBookAsync(CreateBookDTO request);
+        Task<Book> AddBookAsync(CreateBookDTO request, HttpContext httpContext);
         Task<bool> DeleteBookAsync(int id);
     }
 }

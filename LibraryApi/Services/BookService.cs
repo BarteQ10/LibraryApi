@@ -10,16 +10,20 @@ using ServiceStack.Host;
 using System;
 using System.IO;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting.Internal;
+using ServiceStack;
+using Azure.Core;
 
 namespace LibraryApi.Services
 {
     public class BookService : IBookService
     {
         private readonly ApplicationDbContext _context;
-
-        public BookService(ApplicationDbContext context)
+        public Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+        public BookService(ApplicationDbContext context, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
         {
             _context = context;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         public async Task<IEnumerable<Book>> GetBooksAsync()
@@ -51,7 +55,7 @@ namespace LibraryApi.Services
             }
 
             book.Author = request.Author;
-            book.CoverImageData = request.CoverImageData;
+            book.CoverImage = request.CoverImage;
             book.Description = request.Description;
             book.Genre = request.Genre;
             book.IsAvailable = request.IsAvailable;
@@ -61,7 +65,7 @@ namespace LibraryApi.Services
             return true;
         }
 
-        public async Task<Book> AddBookAsync(CreateBookDTO request)
+        public async Task<Book> AddBookAsync(CreateBookDTO request, HttpContext httpContext)
         {
             var book = new Book
             {
@@ -69,15 +73,38 @@ namespace LibraryApi.Services
                 Description = request.Description,
                 Genre = request.Genre,
                 IsAvailable = request.IsAvailable,
-                Title = request.Title
+                Title = request.Title,
+                CoverImage = request.CoverImage,
             };
-
-            if (request.CoverImageData != null)
-            {
-                book.CoverImageData = request.CoverImageData;
-            }
             
-             _context.Books.Add(book);
+            try
+            {
+                var files = httpContext.Request.Form.Files;
+                if (files != null && files.Count > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        FileInfo fi = new FileInfo(file.FileName);
+                        var newFileName = "Image" + DateTime.Now.ToBinary() + fi.Extension;
+                        var path = Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + newFileName);
+                        using (var stream = new FileStream(path, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+                        book.CoverImage = newFileName;
+                    }
+                }
+                else
+                {
+                    book.CoverImage = "PlaceHolder.jpg";
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                throw new HttpException(500, ex.Message);
+            }
+            _context.Books.Add(book);
             await _context.SaveChangesAsync();
 
             return book;
