@@ -45,7 +45,7 @@ namespace LibraryApi.Services
             
         }
 
-        public async Task<bool> UpdateBookAsync(int id, CreateBookDTO request)
+        public async Task<bool> UpdateBookAsync(int id, CreateBookDTO request, HttpContext httpContext)
         {
             var book = await _context.Books.FindAsync(id);
 
@@ -53,9 +53,40 @@ namespace LibraryApi.Services
             {
                 throw new HttpException(404, "Book not found");
             }
-
+            try
+            {
+                var files = httpContext.Request.Form.Files;
+                if (files != null && files.Count > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        if (!book.CoverImage.Contains(file.FileName))
+                        {
+                            FileInfo fi = new FileInfo(file.FileName);
+                            var newFileName = "Image" + DateTime.Now.ToBinary() + fi.Extension;
+                            var path = Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + newFileName);
+                            using (var stream = new FileStream(path, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+                            if (book.CoverImage != "PlaceHolder.jpg")
+                            {
+                                FileInfo file1 = new FileInfo(Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + book.CoverImage));
+                                if (file1.Exists)
+                                {
+                                    file1.Delete();
+                                }
+                            }
+                            book.CoverImage = newFileName;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new HttpException(500, ex.Message);
+            }
             book.Author = request.Author;
-            book.CoverImage = request.CoverImage;
             book.Description = request.Description;
             book.Genre = request.Genre;
             book.IsAvailable = request.IsAvailable;
@@ -118,7 +149,11 @@ namespace LibraryApi.Services
             {
                 throw new HttpException(404, "Book not found");
             }
-
+            FileInfo file1 = new FileInfo(Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + book.CoverImage));
+            if (file1.Exists && book.CoverImage != "PlaceHolder.jpg")
+            {
+                file1.Delete();
+            }
             _context.Books.Remove(book);
             await _context.SaveChangesAsync();
 

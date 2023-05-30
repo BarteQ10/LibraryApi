@@ -40,9 +40,10 @@ namespace LibraryApi.Controllers
         }
 
         [HttpPut("{id}"), Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> PutBook(int id, CreateBookDTO request)
+        public async Task<IActionResult> PutBook(int id, [FromForm] CreateBookDTO request)
         {
-            await _bookService.UpdateBookAsync(id, request);
+            var httpContext = HttpContext;
+            await _bookService.UpdateBookAsync(id, request, httpContext);
             return Ok("Updated");
         }
 
