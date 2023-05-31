@@ -113,6 +113,7 @@ builder.Services.AddSwaggerGen(option =>
 });
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterDTOValidator>();
+builder.Services.AddScoped<IValidator<ChangePasswordDTO>, ChangePasswordDTOValidator>();
 
 var app = builder.Build();
 app.UseExceptionHandler();

@@ -37,7 +37,7 @@ namespace LibraryApi.Services
             var loansDTO = new List<GetLoanDTO>();
             foreach (var loan in loans)
             {
-                var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
+                var userDTO = new GetUserDTO { Email = loan.User.Email };
 
                 var dto = new GetLoanDTO
                 {
@@ -69,7 +69,7 @@ namespace LibraryApi.Services
             var loansDTO = new List<GetLoanDTO>();
             foreach (var loan in loans)
             {
-                var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username, Role = loan.User.Role };
+                var userDTO = new GetUserDTO { Email = loan.User.Email, Role = loan.User.Role };
 
                 var dto = new GetLoanDTO
                 {
@@ -104,7 +104,7 @@ namespace LibraryApi.Services
             {
                 throw new UnauthorizedAccessException();
             }
-            var userDTO = new GetUserDTO { Email = loan.User.Email, Username = loan.User.Username };
+            var userDTO = new GetUserDTO { Email = loan.User.Email };
 
             var dto = new GetLoanDTO
             {

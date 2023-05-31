@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using LibraryApi.DTOs.User;
 using LibraryApi.Services.Interfaces;
 using ServiceStack.Host;
+using PasswordVerificationResult = Microsoft.AspNetCore.Identity.PasswordVerificationResult;
 
 namespace LibraryApi.Services
 {
@@ -36,7 +37,6 @@ namespace LibraryApi.Services
             {
                 Email = dto.Email,
                 IsActive = false,
-                Username = dto.Username,
                 Loans = null,
                 Role = dto.Role,
             };
@@ -46,7 +46,23 @@ namespace LibraryApi.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
+        public async Task<bool> ChangePassword(ChangePasswordDTO dto, int UserId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == UserId);
+            if (user is null)
+            {
+                throw new HttpException(404, "User not found");
+            }
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+            if (result == PasswordVerificationResult.Failed)
+            {
+                throw new HttpException(400, "Invalid current password");
+            }
+            var newPasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
+            user.PasswordHash = newPasswordHash;
+            await _context.SaveChangesAsync();
+            return true;
+        }
         public async Task<string> Login(LoginDTO dto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
@@ -55,10 +71,33 @@ namespace LibraryApi.Services
                 throw new HttpException(404, "Invalid username or password");
             }
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
-            if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+            if (result == PasswordVerificationResult.Failed)
             {
                 throw new HttpException(404, "Invalid username or password");
             }
+            user.TokenExpires = DateTime.Now.AddDays(_authenticationSettings.JwtTokenExpires).ToUniversalTime(); 
+            await _context.SaveChangesAsync();
+            return createToken(user);
+        }
+
+        public async Task<string> Refresh(int userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user is null)
+            {
+                throw new HttpException(404, "Invalid username or password");
+            }
+            if (DateTime.Now > user.TokenExpires)
+            {
+                throw new HttpException(400, "Token expired");
+            }
+            user.TokenExpires = DateTime.Now.AddDays(_authenticationSettings.JwtTokenExpires).ToUniversalTime();
+            await _context.SaveChangesAsync();
+            return createToken(user);
+            
+        }
+        private string createToken(User user)
+        {
             var claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

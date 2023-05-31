@@ -1,6 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LibraryApi.DTOs.User;
 using LibraryApi.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using ServiceStack.Host;
+using System.Security.Claims;
+using NuGet.Protocol;
+using LibraryApi.Entites;
 
 namespace LibraryApi.Controllers
 {
@@ -28,6 +33,22 @@ namespace LibraryApi.Controllers
         {
             var token = await _accountService.Login(dto);
             return Ok(token);
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var token = await _accountService.Refresh(Int32.Parse(userId));
+            return Ok(token);
+        }
+
+        [HttpPut("change-password")]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDTO dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _accountService.ChangePassword(dto, Int32.Parse(userId));
+            return Ok();
         }
     }
 }
