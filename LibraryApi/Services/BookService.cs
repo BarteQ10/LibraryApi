@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting.Internal;
 using ServiceStack;
 using Azure.Core;
+using ServiceStack.Auth;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace LibraryApi.Services
 {
@@ -25,10 +27,25 @@ namespace LibraryApi.Services
             _context = context;
             _hostingEnvironment = hostingEnvironment;
         }
-
-        public async Task<IEnumerable<Book>> GetBooksAsync()
+        public async Task<IEnumerable<Book>> GetBooksAsync(string title, string author, string genre, string available, string sort)
         {
-            return await _context.Books.OrderBy(c => c.Id).ToListAsync();
+            IQueryable<Book> query = _context.Books
+            .Where(b => b.Title.Contains(title) && b.Author.Contains(author) && b.Genre.Contains(genre));
+
+            if (string.IsNullOrEmpty(sort))
+            {
+                query = query.OrderBy(c => c.Title);
+            }
+            else
+            {
+                query = query.OrderByDescending(c => c.Title);
+            }
+            if (!string.IsNullOrEmpty(available))
+            {
+                query = query.Where(b => b.IsAvailable.Equals(true));
+            }
+            List<Book> books = await query.ToListAsync();
+            return books;
         }
 
         public async Task<Book> GetBookByIdAsync(int id)
@@ -158,6 +175,6 @@ namespace LibraryApi.Services
             await _context.SaveChangesAsync();
 
             return true;
-        }
+        }       
     }
 }

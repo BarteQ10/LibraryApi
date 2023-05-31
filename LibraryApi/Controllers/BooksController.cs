@@ -26,9 +26,9 @@ namespace LibraryApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
+        public async Task<ActionResult<IEnumerable<Book>>> GetBooks(string title="", string author = "", string genre = "", string available = "" , string sort = "")
         {
-            var books = await _bookService.GetBooksAsync();
+            var books = await _bookService.GetBooksAsync(title, author, genre, available, sort);
             return Ok(books);
         }
 
