@@ -19,6 +19,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 var authenticationSettings = new AuthenticationSettings();
 builder.Services.AddSingleton(authenticationSettings);
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Configuration.GetSection("Authentication").Bind(authenticationSettings);
 //builder.Services.AddSingleton(authenticationSettings);
 builder.Services.AddAuthentication(option =>
@@ -116,6 +125,7 @@ builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterDTOValidator>();
 builder.Services.AddScoped<IValidator<ChangePasswordDTO>, ChangePasswordDTOValidator>();
 
 var app = builder.Build();
+app.UseCors();
 app.UseExceptionHandler();
 
 app.UseRouting();
