@@ -19,11 +19,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 var authenticationSettings = new AuthenticationSettings();
 builder.Services.AddSingleton(authenticationSettings);
+builder.Services.AddAntiforgery(options =>
+{
+    options.SuppressXFrameOptionsHeader = true;
+});
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins("http://localhost:3000")
+        builder.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -49,6 +53,7 @@ builder.Services.AddAuthentication(option =>
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//options.UseNpgsql(builder.Configuration.GetConnectionString("Host=db,5432;Database=Library;Username=postgres;Password=mysecretpassword")));
 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -85,7 +90,7 @@ builder.Services.AddExceptionHandler(options =>
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new
             {
-                error = exception.Message
+                error = exception.Message+exception.StackTrace+exception.Data
             });
         }
     };
@@ -125,6 +130,11 @@ builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterDTOValidator>();
 builder.Services.AddScoped<IValidator<ChangePasswordDTO>, ChangePasswordDTOValidator>();
 
 var app = builder.Build();
+app.Use((context, next) =>
+{
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    return next();
+});
 app.UseCors();
 app.UseExceptionHandler();
 

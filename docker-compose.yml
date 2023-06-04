@@ -1,0 +1,26 @@
+version: '3.4'
+
+services:
+  libraryapi:
+    image: ${DOCKER_REGISTRY-}libraryapi
+    build:
+      context: .
+      dockerfile: LibraryApi/Dockerfile
+    ports:
+      - 8080:80
+      - 8081:443
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: librarydb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
