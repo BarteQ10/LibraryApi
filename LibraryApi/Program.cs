@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
     });
 });
 builder.Configuration.GetSection("Authentication").Bind(authenticationSettings);
-//builder.Services.AddSingleton(authenticationSettings);
+
 builder.Services.AddAuthentication(option =>
 {
     option.DefaultAuthenticateScheme = "Bearer";
@@ -53,11 +53,12 @@ builder.Services.AddAuthentication(option =>
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//options.UseNpgsql(builder.Configuration.GetConnectionString("Host=db,5432;Database=Library;Username=postgres;Password=mysecretpassword")));
-options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
+
 builder.Services.AddControllers().AddFluentValidation();
 builder.Services.AddRouting();
 builder.Services.AddExceptionHandler(options =>
@@ -73,16 +74,16 @@ builder.Services.AddExceptionHandler(options =>
             await context.Response.WriteAsJsonAsync(new
             {
                 error = exception.Message
-            }) ;
+            });
         }
-        else if(exception is HttpException http)
+        else if (exception is HttpException http)
         {
             context.Response.StatusCode = http.StatusCode;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new
             {
                 error = http.StatusDescription
-            }) ;           
+            });
         }
         else
         {
@@ -90,13 +91,12 @@ builder.Services.AddExceptionHandler(options =>
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new
             {
-                error = exception.Message+exception.StackTrace+exception.Data
+                error = exception.Message + exception.StackTrace + exception.Data
             });
         }
     };
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
@@ -125,6 +125,7 @@ builder.Services.AddSwaggerGen(option =>
         }
     });
 });
+
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IValidator<RegisterDTO>, RegisterDTOValidator>();
 builder.Services.AddScoped<IValidator<ChangePasswordDTO>, ChangePasswordDTOValidator>();
@@ -140,26 +141,31 @@ app.UseExceptionHandler();
 
 app.UseRouting();
 app.UseAuthentication();
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
-           Path.Combine(builder.Environment.ContentRootPath, "Images")),
+        Path.Combine(builder.Environment.ContentRootPath, "Images")),
     RequestPath = "/Images"
 });
 app.UseAuthorization();
 
 app.MapControllers();
-app.UseEndpoints(endpoints =>
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+dbContext.Database.Migrate();
+if (!dbContext.Books.Any())
 {
-    endpoints.MapControllers();
-});
+    dbContext.SeedData();
+}
+dbContext.SaveChanges();
+
 app.Run();

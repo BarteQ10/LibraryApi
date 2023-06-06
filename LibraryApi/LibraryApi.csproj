@@ -35,7 +35,27 @@
 	<Content Include="Images\*">
 		<CopyToPublishDirectory>always</CopyToPublishDirectory>
 	</Content>
-	  <Folder Include="Images\" />
+	<None Remove="Images\1984.jpg" />
+	<None Remove="Images\anna-karenina.jpg" />
+	<None Remove="Images\brave-new-world.jpg" />
+	<None Remove="Images\catcher-in-the-rye.jpg" />
+	<None Remove="Images\crime-punishment.jpg" />
+	<None Remove="Images\dorian-gray.jpg" />
+	<None Remove="Images\frankenstein.jpg" />
+	<None Remove="Images\great-gatsby.jpg" />
+	<None Remove="Images\hobbit.jpg" />
+	<None Remove="Images\huckleberry-finn.jpg" />
+	<None Remove="Images\jane-eyre.jpg" />
+	<None Remove="Images\lighthouse.jpg" />
+	<None Remove="Images\lord-of-the-rings.jpg" />
+	<None Remove="Images\moby-dick.jpg" />
+	<None Remove="Images\mockingbird.jpg" />
+	<None Remove="Images\monte-cristo.jpg" />
+	<None Remove="Images\odyssey.jpg" />
+	<None Remove="Images\PlaceHolder.jpg" />
+	<None Remove="Images\pride-prejudice.jpg" />
+	<None Remove="Images\scarlet-letter.jpg" />
+	<None Remove="Images\wuthering-heights.jpg" />
   </ItemGroup>
 
 

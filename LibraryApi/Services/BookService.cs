@@ -81,14 +81,14 @@ namespace LibraryApi.Services
                         {
                             FileInfo fi = new FileInfo(file.FileName);
                             var newFileName = "Image" + DateTime.Now.ToBinary() + fi.Extension;
-                            var path = Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + newFileName);
+                            var path = Path.Combine(_hostingEnvironment.ContentRootPath, "Images", newFileName);
                             using (var stream = new FileStream(path, FileMode.Create))
                             {
                                 await file.CopyToAsync(stream);
                             }
                             if (book.CoverImage != "PlaceHolder.jpg")
                             {
-                                FileInfo file1 = new FileInfo(Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + book.CoverImage));
+                                FileInfo file1 = new FileInfo(Path.Combine(_hostingEnvironment.ContentRootPath, "Images", newFileName));
                                 if (file1.Exists)
                                 {
                                     file1.Delete();
@@ -122,7 +122,7 @@ namespace LibraryApi.Services
                 Genre = request.Genre,
                 IsAvailable = request.IsAvailable,
                 Title = request.Title,
-                CoverImage = request.CoverImage,
+                CoverImage = "PlaceHolder.jpg"
             };
             
             try
@@ -134,17 +134,13 @@ namespace LibraryApi.Services
                     {
                         FileInfo fi = new FileInfo(file.FileName);
                         var newFileName = "Image" + DateTime.Now.ToBinary() + fi.Extension;
-                        var path = Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + newFileName);
+                        var path = Path.Combine(_hostingEnvironment.ContentRootPath, "Images" , newFileName);
                         using (var stream = new FileStream(path, FileMode.Create))
                         {
                             await file.CopyToAsync(stream);
                         }
                         book.CoverImage = newFileName;
                     }
-                }
-                else
-                {
-                    book.CoverImage = "PlaceHolder.jpg";
                 }
                 
             }
@@ -166,7 +162,7 @@ namespace LibraryApi.Services
             {
                 throw new HttpException(404, "Book not found");
             }
-            FileInfo file1 = new FileInfo(Path.Combine("", _hostingEnvironment.ContentRootPath + "\\Images\\" + book.CoverImage));
+            FileInfo file1 = new FileInfo(Path.Combine(_hostingEnvironment.ContentRootPath + "Images" + book.CoverImage));
             if (file1.Exists && book.CoverImage != "PlaceHolder.jpg")
             {
                 file1.Delete();
