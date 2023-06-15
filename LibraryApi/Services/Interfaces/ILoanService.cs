@@ -9,7 +9,8 @@ namespace LibraryApi.Services.Interfaces
         Task<GetLoanDTO> GetLoanById(int loanId, int userId);
         Task<IEnumerable<GetLoanDTO>> GetAllLoans();
         Task<Loan> CreateLoan(CreateLoanDTO request);
-        Task<Loan> FinishLoan(FinishLoanDTO request, int userId);
+        Task<bool> StartLoan(int id, DateTime startDate);
+        Task<bool> FinishLoan(int id, DateTime endDate);
         Task<bool> DeleteLoan(int loanId, int userId);
     }
 }

@@ -67,12 +67,18 @@ namespace LibraryApi.Controllers
             return CreatedAtAction("GetLoan", new { id = result.Id }, null);
         }
 
-        [HttpPost("end"), Authorize]
-        public async Task<IActionResult> EndLoan(FinishLoanDTO request)
+        [HttpPut("borrow/{id}"), Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> StartLoan(int id, [FromBody] DateTime startDate)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _loanService.FinishLoan(request, Int32.Parse(userId));
-            return Ok(result.Id);
+            await _loanService.StartLoan(id, startDate);
+            return Ok(id);
+        }
+
+        [HttpPut("end/{id}"), Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> EndLoan(int id, [FromBody] DateTime endDate)
+        {
+            await _loanService.FinishLoan(id, endDate);
+            return Ok(id);
         }
 
         [HttpDelete("{id}"), Authorize(Roles = "Admin,Librarian")]

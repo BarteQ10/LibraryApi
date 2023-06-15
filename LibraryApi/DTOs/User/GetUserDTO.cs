@@ -4,8 +4,9 @@ namespace LibraryApi.DTOs.User
 {
     public record struct GetUserDTO
     {
-        public string Username { get; init; }
+        public int Id { get; init; }
         public string Email { get; init; }
+        public bool IsActive { get; init; }
         public Role Role { get; init; }
 
     }

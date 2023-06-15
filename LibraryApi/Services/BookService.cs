@@ -88,7 +88,7 @@ namespace LibraryApi.Services
                             }
                             if (book.CoverImage != "PlaceHolder.jpg")
                             {
-                                FileInfo file1 = new FileInfo(Path.Combine(_hostingEnvironment.ContentRootPath, "Images", newFileName));
+                                FileInfo file1 = new FileInfo(Path.Combine(_hostingEnvironment.ContentRootPath, "Images", book.CoverImage));
                                 if (file1.Exists)
                                 {
                                     file1.Delete();

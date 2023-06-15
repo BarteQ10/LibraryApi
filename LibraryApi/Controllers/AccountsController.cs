@@ -6,6 +6,7 @@ using ServiceStack.Host;
 using System.Security.Claims;
 using NuGet.Protocol;
 using LibraryApi.Entites;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryApi.Controllers
 {
@@ -49,6 +50,23 @@ namespace LibraryApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             await _accountService.ChangePassword(dto, Int32.Parse(userId));
             return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("set-account-status/{id}")]
+        public async Task<IActionResult> SetAccountStatus(int id, [FromBody] bool isActive)
+        {
+            await _accountService.SetAccountStatus(id, isActive);
+            return Ok("Set up status "+isActive+" for user with id: "+id);
+
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("all-users")]
+        public async Task<ActionResult<IEnumerable<GetUserDTO>>> GetUsers()
+        {
+            var users = await _accountService.GetUsers();
+            return Ok(users);
         }
     }
 }

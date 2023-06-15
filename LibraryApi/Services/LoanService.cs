@@ -37,7 +37,7 @@ namespace LibraryApi.Services
             var loansDTO = new List<GetLoanDTO>();
             foreach (var loan in loans)
             {
-                var userDTO = new GetUserDTO { Email = loan.User.Email };
+                var userDTO = new GetUserDTO { Email = loan.User.Email, IsActive = loan.User.IsActive, Role = loan.User.Role };
 
                 var dto = new GetLoanDTO
                 {
@@ -69,7 +69,7 @@ namespace LibraryApi.Services
             var loansDTO = new List<GetLoanDTO>();
             foreach (var loan in loans)
             {
-                var userDTO = new GetUserDTO { Email = loan.User.Email, Role = loan.User.Role };
+                var userDTO = new GetUserDTO { Email = loan.User.Email, IsActive = loan.User.IsActive , Role = loan.User.Role };
 
                 var dto = new GetLoanDTO
                 {
@@ -104,7 +104,7 @@ namespace LibraryApi.Services
             {
                 throw new UnauthorizedAccessException();
             }
-            var userDTO = new GetUserDTO { Email = loan.User.Email };
+            var userDTO = new GetUserDTO { Email = loan.User.Email, IsActive = loan.User.IsActive, Role = loan.User.Role };
 
             var dto = new GetLoanDTO
             {
@@ -137,7 +137,7 @@ namespace LibraryApi.Services
                 throw new HttpException(404, "User not found");
             }
 
-            var loan = new Loan { BorrowDate = request.BorrowDate, ReturnDate = null, IsReturned = false, Book = book, User = user };
+            var loan = new Loan { BorrowDate = null, ReturnDate = null, IsReturned = false, Book = book, User = user };
             book.IsAvailable = false;
             _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
@@ -145,34 +145,37 @@ namespace LibraryApi.Services
             return loan;
         }
 
-        public async Task<Loan> FinishLoan(FinishLoanDTO request, int userId)
+        public async Task<bool> StartLoan(int id, DateTime startDate)
         {
-            if (_context.Loans == null)
+            var loan = await _context.Loans.FindAsync(id);
+            if (loan == null)
             {
-                throw new Exception();
+                throw new HttpException(404, "Loan not found");
             }
+
+            loan.BorrowDate = startDate;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> FinishLoan(int id, DateTime endDate)
+        {
 
             var loan = await _context.Loans
                 .Include(b => b.Book)
                 .Include(u => u.User)
-                .FirstOrDefaultAsync(i => i.Id == request.LoanId);
+                .FirstOrDefaultAsync(i => i.Id == id);
 
             if (loan == null)
             {
                 throw new HttpException(404, "Loan not found");
             }
 
-            if (loan.User.Id != userId)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
             loan.Book.IsAvailable = true;
-            loan.ReturnDate = request.ReturnDate;
+            loan.ReturnDate = endDate;
             loan.IsReturned = true;
             await _context.SaveChangesAsync();
 
-            return loan;
+            return true;
         }
 
         public async Task<bool> DeleteLoan(int loanId, int userId)

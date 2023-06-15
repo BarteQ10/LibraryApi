@@ -6,7 +6,6 @@ namespace LibraryApi.DTOs.Loan
     {
         public int BookId { get; init; }
         public int UserId { get; init; }
-        public DateTime BorrowDate { get; init; }
 
     }
 }

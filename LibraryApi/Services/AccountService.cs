@@ -116,6 +116,33 @@ namespace LibraryApi.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             return tokenHandler.WriteToken(token);
         }
+
+        public async Task<IEnumerable<GetUserDTO>> GetUsers()
+        {
+            var users = await _context.Users.ToListAsync();
+            var userDtos = users.Select(user => new GetUserDTO
+            {
+                Id = user.Id,
+                Email = user.Email,
+                IsActive = user.IsActive,
+                Role = user.Role
+            });
+
+            return userDtos;
+        }
+
+        public async Task<bool> SetAccountStatus(int id, bool isActive)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                throw new HttpException(404, "User not found");
+            }
+
+            user.IsActive = isActive;
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 
     
