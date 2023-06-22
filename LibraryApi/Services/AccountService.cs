@@ -15,6 +15,7 @@ using LibraryApi.DTOs.User;
 using LibraryApi.Services.Interfaces;
 using ServiceStack.Host;
 using PasswordVerificationResult = Microsoft.AspNetCore.Identity.PasswordVerificationResult;
+using Microsoft.Identity.Client;
 
 namespace LibraryApi.Services
 {
@@ -39,6 +40,8 @@ namespace LibraryApi.Services
                 IsActive = false,
                 Loans = null,
                 Role = dto.Role,
+                RefreshToken = "",
+                RefreshTokenExpires = DateTime.UtcNow,
             };
             var hashedPassword = _passwordHasher.HashPassword(newUser, dto.Password);
             newUser.PasswordHash = hashedPassword;
@@ -63,7 +66,7 @@ namespace LibraryApi.Services
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<string> Login(LoginDTO dto)
+        public async Task<AuthenticationResult> Login(LoginDTO dto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user is null)
@@ -75,26 +78,40 @@ namespace LibraryApi.Services
             {
                 throw new HttpException(404, "Invalid username or password");
             }
-            user.TokenExpires = DateTime.Now.AddDays(_authenticationSettings.JwtTokenExpires).ToUniversalTime(); 
+            user.RefreshToken = Guid.NewGuid().ToString();
+            user.RefreshTokenExpires = DateTime.Now.AddDays(_authenticationSettings.RefreshTokenExpires).ToUniversalTime();
             await _context.SaveChangesAsync();
-            return createToken(user);
+            return new AuthenticationResult
+            {
+                JwtToken = createToken(user),
+                RefreshToken = user.RefreshToken
+            };
         }
 
-        public async Task<string> Refresh(int userId)
+        public async Task<AuthenticationResult> Refresh(int userId, string refreshToken)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user is null)
             {
                 throw new HttpException(404, "Invalid username or password");
             }
-            if (DateTime.Now > user.TokenExpires)
+            if (DateTime.Now > user.RefreshTokenExpires)
             {
                 throw new HttpException(400, "Token expired");
             }
-            user.TokenExpires = DateTime.Now.AddDays(_authenticationSettings.JwtTokenExpires).ToUniversalTime();
+            if (user.RefreshToken != refreshToken)
+            {
+                throw new HttpException(400, "Token XDDD");
+            }
+            user.RefreshToken = Guid.NewGuid().ToString();
+            user.RefreshTokenExpires = DateTime.Now.AddDays(_authenticationSettings.RefreshTokenExpires).ToUniversalTime();
             await _context.SaveChangesAsync();
-            return createToken(user);
-            
+            return new AuthenticationResult
+            {
+                JwtToken = createToken(user),
+                RefreshToken = user.RefreshToken
+            };
+
         }
         private string createToken(User user)
         {
@@ -107,7 +124,8 @@ namespace LibraryApi.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authenticationSettings.JwtKey));
             var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddDays(_authenticationSettings.JwtExpireDays);
+            //var expires = DateTime.Now.AddDays(_authenticationSettings.JwtExpireDays);
+            var expires = DateTime.Now.AddMinutes(_authenticationSettings.JwtExpireDays);
             var token = new JwtSecurityToken(_authenticationSettings.JwtIssuer,
                 _authenticationSettings.JwtIssuer,
                 claims,

@@ -7,6 +7,7 @@ using System.Security.Claims;
 using NuGet.Protocol;
 using LibraryApi.Entites;
 using Microsoft.AspNetCore.Authorization;
+using NuGet.Common;
 
 namespace LibraryApi.Controllers
 {
@@ -15,7 +16,11 @@ namespace LibraryApi.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
-
+        public class RefreshDTO
+        {
+            public int UserId { get; set; }
+            public string RefreshToken { get; set; }
+        }
         public AccountController(IAccountService accountService)
         {
             _accountService = accountService;
@@ -37,11 +42,10 @@ namespace LibraryApi.Controllers
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh()
+        public async Task<IActionResult> Refresh(RefreshDTO dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var token = await _accountService.Refresh(Int32.Parse(userId));
-            return Ok(token);
+            var result = await _accountService.Refresh(dto.UserId, dto.RefreshToken);
+            return Ok(result);
         }
 
         [HttpPut("change-password")]
