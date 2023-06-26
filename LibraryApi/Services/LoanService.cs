@@ -137,6 +137,17 @@ namespace LibraryApi.Services
                 throw new HttpException(404, "User not found");
             }
 
+            if (!user.IsActive)
+            {
+                throw new HttpException(406, "User account is not active");
+            }
+
+            var activeLoans = await _context.Loans.Where(l => l.User.Id == request.UserId && !l.IsReturned).ToListAsync();
+            if (activeLoans.Count >= 5)
+            {
+                throw new HttpException(406, "Attempt to exceed the number of active loans per user");
+            }
+
             var loan = new Loan { BorrowDate = null, ReturnDate = null, IsReturned = false, Book = book, User = user };
             book.IsAvailable = false;
             _context.Loans.Add(loan);
