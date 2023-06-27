@@ -40,7 +40,6 @@ namespace LibraryApi.DTOs.User
                     }
                 });
             RuleFor(x => x.Role)
-                .NotEmpty()
                 .IsInEnum();
         }
 
